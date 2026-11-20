@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Makon</string>
+    <string name="title_activity_main">Makon</string>
+    <string name="package_name">uz.makon.app</string>
+    <string name="custom_url_scheme">uz.makon.app</string>
+</resources>

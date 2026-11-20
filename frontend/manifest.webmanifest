@@ -1,0 +1,23 @@
+{
+  "id": "/",
+  "name": "Makon",
+  "short_name": "Makon",
+  "description": "Moliya, darslar, kitoblar va rejalar bir joyda",
+  "lang": "uz",
+  "start_url": "/#/today",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f2f8",
+  "theme_color": "#f4f2f8",
+  "categories": ["finance", "education", "productivity"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Xarajat qoʻshish", "short_name": "Xarajat", "url": "/#/finance/add", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Bugun", "url": "/#/today", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

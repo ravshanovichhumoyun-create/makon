@@ -1,0 +1,16 @@
+{
+  "name": "makon-mobile",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Makon Android app (Capacitor wrapper around ../frontend)",
+  "scripts": {
+    "build:apk": "./build.sh"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.6.10",
+    "@capacitor/cli": "^7.6.10",
+    "@capacitor/core": "^7.6.10",
+    "@capacitor/filesystem": "^7.1.9",
+    "@capacitor/share": "^7.0.4"
+  }
+}

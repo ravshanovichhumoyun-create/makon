@@ -1,0 +1,11 @@
+{
+  "appId": "uz.makon.app",
+  "appName": "Makon",
+  "webDir": "www",
+  "backgroundColor": "#f4f5fb",
+  "android": {
+    "adjustMarginsForEdgeToEdge": "auto",
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  }
+}
