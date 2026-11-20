@@ -50,6 +50,49 @@ export function cachedWeather() {
 
 let inflight = null;
 
+// Direct Open-Meteo calls are the fallback when our server is rate limited
+// (free hosts share outgoing IP addresses). Same fields as /api/weather.
+const OM_FORECAST = 'https://api.open-meteo.com/v1/forecast';
+const OM_GEO = 'https://geocoding-api.open-meteo.com/v1/search';
+
+async function getJson(url) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
+    if (!res.ok) throw new Error(`http_${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function forecastDirect(lat, lon) {
+  const tz = (store.getUser() || {}).tz || Intl.DateTimeFormat().resolvedOptions().timeZone || 'auto';
+  const q = new URLSearchParams({
+    latitude: lat.toFixed(2), longitude: lon.toFixed(2), timezone: tz, forecast_days: '1',
+    current: 'temperature_2m,apparent_temperature,weather_code,is_day,wind_speed_10m,relative_humidity_2m',
+    daily: 'temperature_2m_max,temperature_2m_min,sunrise,sunset',
+  });
+  const d = await getJson(`${OM_FORECAST}?${q}`);
+  const cur = d.current || {};
+  const first = (k) => ((d.daily || {})[k] || [])[0] ?? null;
+  if (cur.temperature_2m === undefined) throw new Error('no data');
+  return {
+    temp: cur.temperature_2m, feels: cur.apparent_temperature, code: cur.weather_code, is_day: !!cur.is_day,
+    wind: cur.wind_speed_10m, humidity: cur.relative_humidity_2m, max: first('temperature_2m_max'), min: first('temperature_2m_min'),
+    sunrise: String(first('sunrise') || '').slice(-5) || null, sunset: String(first('sunset') || '').slice(-5) || null, time: cur.time,
+  };
+}
+
+async function searchCityDirect(q) {
+  const d = await getJson(`${OM_GEO}?${new URLSearchParams({ name: q, count: '8', language: getLang(), format: 'json' })}`);
+  return (d.results || []).filter((r) => r.latitude != null && r.longitude != null).map((r) => ({
+    name: String(r.name || '').slice(0, 80), region: String(r.admin1 || '').slice(0, 80), country: String(r.country || '').slice(0, 80),
+    lat: Math.round(r.latitude * 1e4) / 1e4, lon: Math.round(r.longitude * 1e4) / 1e4,
+  }));
+}
+
 /** Fresh weather if the cache is old; resolves to the data or null (never throws). */
 export function loadWeather({ force = false } = {}) {
   if (appctl.config.weather && appctl.config.weather.enabled === false) return Promise.resolve(null);
@@ -59,6 +102,7 @@ export function loadWeather({ force = false } = {}) {
   if (!navigator.onLine) return Promise.resolve(c && c.key === placeKey(p) ? c.data : null);
   if (inflight) return inflight;
   inflight = api.get(`/api/weather?lat=${p.lat}&lon=${p.lon}`, { timeout: 20000 })
+    .catch(() => forecastDirect(p.lat, p.lon))
     .then((data) => {
       try { localStorage.setItem(CACHE_KEY, JSON.stringify({ key: placeKey(p), at: Date.now(), data })); } catch (_) { /* ignore */ }
       return data;
@@ -98,7 +142,8 @@ export function openCityPicker() {
   const search = debounce(async (q) => {
     if (q.trim().length < 2) { setHTML(box, ''); return; }
     try {
-      const res = await api.get(`/api/geo?q=${encodeURIComponent(q.trim())}&lang=${getLang()}`);
+      const res = await api.get(`/api/geo?q=${encodeURIComponent(q.trim())}&lang=${getLang()}`)
+        .catch(async () => ({ results: await searchCityDirect(q.trim()) }));
       results = res.results || [];
       fail('');
       setHTML(box, results.length

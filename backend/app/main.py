@@ -125,7 +125,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 CSP = (
     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; "
-    "font-src 'self'; connect-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; "
+    "font-src 'self'; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; "
     "form-action 'self'; frame-ancestors 'self'; manifest-src 'self'; worker-src 'self'"
 )
 
