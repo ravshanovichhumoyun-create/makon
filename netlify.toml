@@ -1,0 +1,33 @@
+# Netlify: the website (static files). Data comes from the Makon API server on Render.
+# Deploy: python3 scripts/build_static.py https://makon-5e00.onrender.com && netlify deploy --prod --dir dist
+[build]
+  command = "python3 scripts/build_static.py https://makon-5e00.onrender.com"
+  publish = "dist"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://makon-5e00.onrender.com https://api.open-meteo.com https://geocoding-api.open-meteo.com; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; manifest-src 'self'; worker-src 'self'"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "SAMEORIGIN"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(self), payment=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    Cross-Origin-Opener-Policy = "same-origin"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/download/*"
+  [headers.values]
+    Content-Type = "application/vnd.android.package-archive"
+    Content-Disposition = "attachment; filename=Makon.apk"
+
+[[redirects]]
+  from = "/privacy"
+  to = "/privacy.html"
+  status = 200
