@@ -58,6 +58,28 @@ def create_tables() -> None:
     engine = get_engine()
     Base.metadata.create_all(engine)
     add_missing_columns(engine)
+    lock_down_postgres(engine)
+
+
+def lock_down_postgres(engine: Engine) -> None:
+    """Keep the tables reachable only through this app.
+
+    Hosted Postgres (Supabase) also publishes tables in the "public" schema through its own REST API
+    for the "anon" / "authenticated" roles. Row level security without policies blocks those roles,
+    while the app's own connection (the table owner) is unaffected.
+    """
+    if engine.dialect.name != "postgresql":
+        return
+    from sqlalchemy import text
+
+    with engine.begin() as conn:
+        for table in Base.metadata.sorted_tables:
+            conn.execute(text(f'ALTER TABLE "{table.name}" ENABLE ROW LEVEL SECURITY'))
+        roles = {r[0] for r in conn.execute(text("SELECT rolname FROM pg_roles WHERE rolname IN ('anon', 'authenticated')"))}
+        for role in sorted(roles):
+            conn.execute(text(f"REVOKE ALL ON ALL TABLES IN SCHEMA public FROM {role}"))
+            conn.execute(text(f"REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM {role}"))
+            conn.execute(text(f"ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM {role}"))
 
 
 def add_missing_columns(engine: Engine) -> List[str]:
